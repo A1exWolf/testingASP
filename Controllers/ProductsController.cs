@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TestingBackend.Data;
 using TestingBackend.Models;
@@ -14,6 +15,13 @@ public class ProductsController : ControllerBase
     public ProductsController(AppDbContext context)
     {
         _context = context;
+    }
+
+    [Authorize(Roles = "0")]
+    [HttpGet("temp")]
+    public IActionResult GetTest()
+    {
+        return Ok($"Hello, World!, {User.Identity}");
     }
 
     [HttpGet]
