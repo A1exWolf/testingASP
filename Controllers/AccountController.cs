@@ -15,10 +15,12 @@ namespace TestingBackend.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public AccountController(AppDbContext context)
+    public AccountController(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -56,21 +58,23 @@ public class AccountController : ControllerBase
         // Формируем сведений о пользователе, которые будут включены в JWT.
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim(ClaimTypes.Sid, user.Id.ToString())
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role.ToString()),
+            new(ClaimTypes.Sid, user.Id.ToString())
         };
 
         var now = DateTime.UtcNow;
+        
+        // var key = _configuration["Jwt:Key"];
 
         var jwt = new JwtSecurityToken(
-            issuer: "MyAuthServer", // Издатель токена
-            audience: "MyAuthClient", // Потребитель токена
+            issuer: _configuration["Jwt:Issuer"], // Издатель токена
+            audience: _configuration["Jwt:Audience"], // Потребитель токена
             claims: claims, // Полезная нагрузка с данными о пользователе
             notBefore: now, // Токен действителен с текущего момента
             expires: now.AddMinutes(60), // Токен истекает через 60 минут
             signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes("wbNrGhnhSAEOp01FMczd6GxNHoyrAuW2")),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)), // Секретный ключ для шифрования
                 SecurityAlgorithms.HmacSha256) // Алгоритм подписи токена (HMAC-SHA256)
         );
 
